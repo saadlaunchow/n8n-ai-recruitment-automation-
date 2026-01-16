@@ -178,6 +178,7 @@ For customization, deployment, or consulting related to **AI automation, n8n wor
 ---
 
 > 🚀 Built with n8n AI Automation to scale recruitment intelligently.
+
 ## ⚙️ Setup & Configuration
 
 ### Prerequisites
@@ -201,6 +202,8 @@ Create and connect the following credentials in n8n:
 - Google Drive OAuth2
 - Google Sheets OAuth2
 - OpenAI API
+
+> ⚠️ Do not commit credentials to this repository.
 
 ---
 
@@ -268,4 +271,3 @@ Create a Google Sheet with columns such as:
 
 ## 📌 Notes
 This workflow is designed to be modular and easily extendable for multiple roles, ATS systems, or notification channels.
-
