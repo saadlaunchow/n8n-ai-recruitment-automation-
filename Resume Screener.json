@@ -1,0 +1,670 @@
+{
+  "name": "Resume Screener",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "q": "=has:attachment (subject:(resume OR cv) OR (resume OR cv)) filename:(pdf OR doc OR docx)\n"
+        },
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -496,
+        0
+      ],
+      "id": "e7cc2cf2-2305-437f-93b0-39d72f47e95d",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "X1MmrWrhuaAtepRj",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "attachment_0",
+        "name": "={{ $json.from.value[0].name }} Resume",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1PjzMYJA0-Y6h-F8pwKT94Xl2EYzbVoN1",
+          "mode": "list",
+          "cachedResultName": "Resume",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1PjzMYJA0-Y6h-F8pwKT94Xl2EYzbVoN1"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -288,
+        0
+      ],
+      "id": "d5956b1b-1ccd-4bae-8a21-a960f3e15b39",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "HthXWhTjLaeOESqJ",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -80,
+        0
+      ],
+      "id": "3c6e7916-fbea-4046-a7a9-efe8865b3d95",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "HthXWhTjLaeOESqJ",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        128,
+        0
+      ],
+      "id": "5acd9569-708f-4da8-95ff-ad3f47dca933",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "079d6651-6f8b-466e-8ccf-a67fbd3a879e",
+              "name": "Text",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        336,
+        0
+      ],
+      "id": "d950e73e-6d5b-4545-b0fb-fa829a8db6bd",
+      "name": "Standarized"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        736,
+        0
+      ],
+      "id": "49bdbde3-fd9b-4eb5-ab36-bd5b3e26e298",
+      "name": "Extract from File1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Candidate's Resume:\n{{ $('Standarized').item.json.Text }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=# Overview You are an expert technical recruiter specializing in Pharmacist and Retail Phamacies in Pakistan and medical fields. You have been given a job description and a candidate resume. Your task is to analyze the resume in relation to the job description and provide a detailed screening report. \n\nFocus specifically on how well the candidate matches the core requirements and ideal profile outlined in the job description. Evaluate both technical skill alignment and business-context understanding. Use reasoning grounded in the actual content of the resume and job post - avoid making assumptions. \n\n## Output Your output should follow this exact format: \n\nCandidate Strengths: List the top strengths or relevant qualifications the candidate brings to the table. Be specific. \n\nCandidate Weaknesses: List areas where the candidate is lacking or mismatched based on the job description. \n\nRisk Factor: - Assign a risk score (Low / Medium / High) - Explain the worst-case scenario if this candidate is hired. \n\nReward Factor: - Assign a reward score (Low / Medium / High) - Describe the best-case scenario what value could this candidate unlock? - Does the candidate appear to be a short-term or long-term fit? \n\nOverall Fit Rating (0-10): Assign a number between 0 (terrible match) and 10 (perfect match). Do not give decimals. \n\nJustification for Rating: Explain clearly why this candidate received that score. Reference specific resume content and how it aligns or doesn't with the job description. I want to parse this data and want to put this in the google sheet I want you to write down me the code to the parse the data so I can put that in the structured output parser to have the structred Data:\n\nHere is the Job Description\n{{ $json.text }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        944,
+        0
+      ],
+      "id": "8641392a-0767-40ed-ba51-190235774cff",
+      "name": "Recruitment Agent"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "1dQB2gFaPzVVrUTU3ahGvy88GVmjfkGw9g9cBvlqtQq4",
+          "mode": "list",
+          "cachedResultName": "Pharmacist Job Descriptions",
+          "cachedResultUrl": "https://docs.google.com/document/d/1dQB2gFaPzVVrUTU3ahGvy88GVmjfkGw9g9cBvlqtQq4/edit?usp=drivesdk"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {
+              "docsToFormat": "application/pdf"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        544,
+        0
+      ],
+      "id": "8a48f490-f2cf-4983-af66-332dcb33b28c",
+      "name": "Job Description",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "HthXWhTjLaeOESqJ",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1184,
+        224
+      ],
+      "id": "9234fa95-b704-4a46-aa6c-80cdda16a47c",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "xZFUiS9xWPAF8mIT",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"candidate_strengths\": {\n      \"type\": \"array\",\n      \"description\": \"Top strengths or relevant qualifications the candidate brings to the table.\",\n      \"items\": { \"type\": \"string\" }\n    },\n    \"candidate_weaknesses\": {\n      \"type\": \"array\",\n      \"description\": \"Areas where the candidate is lacking or mismatched based on the job description.\",\n      \"items\": { \"type\": \"string\" }\n    },\n    \"risk_factor\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"score\": {\n          \"type\": \"string\",\n          \"enum\": [\"Low\", \"Medium\", \"High\"]\n        },\n        \"explanation\": {\n          \"type\": \"string\",\n          \"description\": \"Explain the worst-case scenario if this candidate is hired.\"\n        }\n      },\n      \"required\": [\"score\", \"explanation\"]\n    },\n    \"reward_factor\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"score\": {\n          \"type\": \"string\",\n          \"enum\": [\"Low\", \"Medium\", \"High\"]\n        },\n        \"description\": {\n          \"type\": \"string\",\n          \"description\": \"Describe the best-case scenario — what value this candidate could unlock.\"\n        },\n        \"fit_type\": {\n          \"type\": \"string\",\n          \"enum\": [\"Short-term\", \"Long-term\", \"Unknown\"],\n          \"description\": \"Does the candidate appear to be a short-term or long-term fit?\"\n        }\n      },\n      \"required\": [\"score\", \"description\", \"fit_type\"]\n    },\n    \"overall_fit_rating\": {\n      \"type\": \"integer\",\n      \"description\": \"Assign a number between 0 (terrible match) and 10 (perfect match).\"\n    },\n    \"justification_for_rating\": {\n      \"type\": \"string\",\n      \"description\": \"Explain clearly why this candidate received that score, referencing resume and job description.\"\n    }\n  },\n  \"required\": [\n    \"candidate_strengths\",\n    \"candidate_weaknesses\",\n    \"risk_factor\",\n    \"reward_factor\",\n    \"overall_fit_rating\",\n    \"justification_for_rating\"\n  ]\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        928,
+        224
+      ],
+      "id": "ac4c1ab0-22e0-40e4-bb15-6794dd7239b3",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "text": "={{ $('Standarized').item.json.Text }}",
+        "attributes": {
+          "attributes": [
+            {
+              "name": "Name",
+              "description": "Complete Name of the candidate",
+              "required": true
+            },
+            {
+              "name": "Email",
+              "description": "Email of the candidate",
+              "required": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.2,
+      "position": [
+        1296,
+        0
+      ],
+      "id": "a751dcf2-7c22-4ae8-ae35-aca1e0e82603",
+      "name": "Information Extractor"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "17PI2AkujlYaJ8QYp8Wp7gl6hzSUMYZXvvXkzz_LyNDw",
+          "mode": "list",
+          "cachedResultName": "Resume Screener",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17PI2AkujlYaJ8QYp8Wp7gl6hzSUMYZXvvXkzz_LyNDw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17PI2AkujlYaJ8QYp8Wp7gl6hzSUMYZXvvXkzz_LyNDw/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $now.format('dd/mm/yyyy h:m a') }}",
+            "Name": "={{ $json.output.Name }}",
+            "Resume": "={{ $('Upload file').item.json.webViewLink }}",
+            "Strength": "={{ $('Recruitment Agent').item.json.output.candidate_strengths.join(\"\\n\\n\") }}",
+            "Weakness": "={{ $('Recruitment Agent').item.json.output.candidate_weaknesses.join(\"\\n\\n\") }}",
+            "Risk Factors": "={{ $('Recruitment Agent').item.json.output.risk_factor.score }}\n\n{{ $('Recruitment Agent').item.json.output.risk_factor.explanation }}",
+            "Reward Factors": "={{ $('Recruitment Agent').item.json.output.reward_factor.score }}\n\n{{ $('Recruitment Agent').item.json.output.reward_factor.description }}\n",
+            "Overall Fit ": "={{ $('Recruitment Agent').item.json.output.overall_fit_rating }}",
+            "Justification": "={{ $('Recruitment Agent').item.json.output.justification_for_rating }}"
+          },
+          "matchingColumns": [
+            "Date"
+          ],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Resume",
+              "displayName": "Resume",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Strength",
+              "displayName": "Strength",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Weakness",
+              "displayName": "Weakness",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Risk Factors",
+              "displayName": "Risk Factors",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reward Factors",
+              "displayName": "Reward Factors",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Overall Fit ",
+              "displayName": "Overall Fit ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Justification",
+              "displayName": "Justification",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1648,
+        0
+      ],
+      "id": "2d59211a-b194-4315-b8f2-527d59228229",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "eravhWoHo2sem9Jb",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "9b7f4fdc-0fa2-4eb7-a5f3-a1be779a4a4b",
+              "leftValue": "={{ $json['Overall Fit '] }}",
+              "rightValue": 5,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1856,
+        0
+      ],
+      "id": "29a5a221-a533-4f3c-9176-17c41d5e257e",
+      "name": "If"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2096,
+        160
+      ],
+      "id": "e0398f63-6122-4c55-87f9-b2334883f623",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Information Extractor').item.json.output.Email }}",
+        "subject": "Moving forward: Your application with Launchow",
+        "emailType": "text",
+        "message": "=Hi {{ $('Information Extractor').item.json.output.Name }}\n\nThank you for giving us the opportunity to review your resume. We really enjoyed learning about your experience and would love to chat with you in an interview.\n\nYou can book a time that works best for you via our scheduling link here\n\n:[Insert Calendar Link]\n\nWe’re excited to hear more about your background and discuss how you can contribute to the team.\n\nCheers,\n\nHR LauchowPh# 0300-0000000Email# saad@launchow.com",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2128,
+        -144
+      ],
+      "id": "70ca7333-59c7-4753-bbbd-d12c70a665a0",
+      "name": "Send a message",
+      "webhookId": "1103e8e2-bfa8-471d-9840-3fef2895e702",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "FsRtpWO1mrnGtcu6",
+          "name": "Gmail account 2"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "content": "Resume Screener:\n\nNode 1: Gmail Trigger:\n - Need to add the Gmail credentials. After that in mode will Gmail every minutes for new mails. \n - In the event used as default Message Received. \n - Need to add the some filter in the search box. Like has attachment (Subject Resume or CV). Now we have received email which is connected to the N8N. \n\nNode 2: Upload File (Google Drive):\n -Need to create credentials For google Drive from Google Cloud Console Project and have to enable Google Drive API for credentials.  \n - The in the resource need to select file as we are uploading file\n - In the Input field data Name need to map the attachment that we have received in the email. \n - Then in the File name will map the candidate name with suffix Resume\n - In Parent Drive will add My Drive\n - In Parent Folder we add the Resume as we have created in the Google Drive. \n\nNode 3: Download File (Google Drive)\n - So now we need that file again in the n8n so we add the google drive node so we can access the G-drive and can get the file. \n - Previous credentials for Google Drive will work, In the Resource we will select file as we are accessing the file.\n - In operation we will add the download as we are downloading the file (Resume or CV) from the Google Drive. \n - File we select by ID and we can get the ID from the previous G-drive node and will map into this. \n\nNode 4: Extract from File:\n - Now we need to extract the content from the Resume or CV. We use this node and will extract the data from the file. \n - This node will give us all the contents of the CV in the text form. \n\nNode 5: Standardization:\n - Now we need to standardized the data as in the previous node we get all the data with the some information that we may not need. So we only standardized the data with text content in it. \n\nNode 6: Job Description:\n - Now we need to access the data according to our job descriptions. So we need to connect a file to the n8n which contain all the information about the Job descriptions. \n - We need to upload that sheet or file to the google drive and So n8n can directly access that file. \n - We use previous Credentials for G drive. \n - In Resource we use file as we are getting a file from G-drive.\n - In the operation we will select download as we are downloading the file. \n - In the File we select form the list which file we are getting from the G-drive. \n - In Option we need to use Google file conversation. So we convert word or google docs to PDF. Google drawing to JPEG, Google Slides to MS Power point and Google sheet to CSV format. \n \nNode 7: Extract from File :\n - We use this again as we are extracting all the text data from the job description file. \n\n",
+        "height": 816,
+        "width": 1408,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -544,
+        -848
+      ],
+      "typeVersion": 1,
+      "id": "d64f1f8f-1bc4-41df-b966-5e15936e8907",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "Node 8: AI Agent (Recruitment Agent)\n - We use the Open AI model and connect the credentials to the n8n \n - In the User message we will map text From the standardized Node so AI have access the content of the AI in text form\n - In the System message we write the strict prompt that will analyze the data text from CV and compare it with the Job description text that we map in the system prompt. \n - We need to add a tool in the AI agent for data parsing as we need structured Data. We use structured Output Parse and write down a code which will be given access the data that AI analyze and compare with the Job description and give the final verdict. \n - This gave us the overall score positive and negative point of the candidate. \n\nNode 9: Information Extractor:\n - Now we need the exact name and email of the candidate. We will add attributes for Name and email and add the open AI model to this So AI can get name and email from the text of the CV or Resume. \n\nNode 10: Append Row in Google Sheet\n - Now will map all our output that contain overall score of the candidate with Name email, Resume link. Strength and weakness, and justification for weakness and strength. In this way we have the google sheet for the all the candidates. \n \nNode 11: If Node\n - In this node we will filter out the candidate that has score above 5. \n\nNode 12: Gmail Send a message\n - In this node it will send message with the calendar link to schedule interview who has evaluation score more than 5. ",
+        "height": 512,
+        "width": 1040,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        912,
+        -544
+      ],
+      "typeVersion": 1,
+      "id": "8ef4a452-b388-444c-a3f1-40f525f34cdb",
+      "name": "Sticky Note1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Standarized",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Standarized": {
+      "main": [
+        [
+          {
+            "node": "Job Description",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File1": {
+      "main": [
+        [
+          {
+            "node": "Recruitment Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Job Description": {
+      "main": [
+        [
+          {
+            "node": "Extract from File1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Recruitment Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Information Extractor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Recruitment Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recruitment Agent": {
+      "main": [
+        [
+          {
+            "node": "Information Extractor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Information Extractor": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "e48546b0-973e-4dd4-bb95-45c527912b78",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e728a5cdfbdc32f08ead54d5b227f68522fe9c9436fe90b15508e0abfa19dfb4"
+  },
+  "id": "mGVk98HpuTKahAQ5",
+  "tags": []
+}
